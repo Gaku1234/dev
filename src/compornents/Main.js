@@ -9,8 +9,59 @@ import Card from "./Card";
 const Main = () => {
     const [data, setData] = useState(dummyData);
 
-    return(
-    <DragDropContext>
+    const onDragEnd = (result) => {
+        const { source, destination } = result;
+
+        //別のカラムにタスクが移動したとき
+        if(source.droppableId !== destination.droppableId){
+            console.log("a");
+            //動かし始めたカラムの配列番号を取得
+            const sourceColIndex = data.findIndex((e) => e.id === source.droppableId);
+            console.log(sourceColIndex);
+            //動かし終わったカラムの配列番号の取得
+            const destinationColIndex = data.findIndex(
+                (e) => e.id === destination.droppableId
+            );
+            console.log(destinationColIndex);
+
+            //
+            const sourceCol = data[sourceColIndex];
+            const destinationCol = data[destinationColIndex];
+
+            //最初のカラム中のタスクを全て取得・理由は後でsplice関数でその動かし始めたタスクを削除するため
+            //※コピーしたsourceColであることが重要。元データに影響を与えないため
+            const sourceTask = [...sourceCol.tasks];
+            //後のカラムのタスクを全て取得・理由は後でsplice関数でその動かし始めたタスクを追加するため
+            const destinationTask = [...destinationCol.tasks];
+
+            //動かし始めたカラムからタスクを削除
+            const [removed] = sourceTask.splice(source.index, 1);
+            //後のカラムに追加
+            destinationTask.splice(destination.index, 0, removed);
+
+            data[sourceColIndex].tasks = sourceTask;
+            data[destinationColIndex].tasks = destinationTask;
+            setData(data);
+        //同じカラム内でのタスクの入れ替え
+        }else{
+            const sourceColIndex = data.findIndex((e) => e.id === source.droppableId);
+            console.log(sourceColIndex);
+            const sourceCol = data[sourceColIndex];
+            console.log(sourceCol);
+
+            const sourceTask = [...sourceCol.tasks];
+            //タスクを削除
+            const [removed] = sourceTask.splice(source.index, 1);
+            //タスクを追加
+            sourceTask.splice(destination.index, 0, removed);
+
+            data[sourceColIndex].tasks = sourceTask;
+            setData(data);
+        }
+    };
+
+return (
+    <DragDropContext onDragEnd={onDragEnd}>
         <div className="trello">
             {data.map((section) => (
                 <Droppable key={section.id} droppableId={section.id}>
@@ -35,15 +86,15 @@ const Main = () => {
                                     {...provided.dragHandleProps}
                                     style={{
                                         ...provided.draggableProps.style,
-                                        opacity: snapshot.isDragging ? "red" : "white",
+                                        opacity: snapshot.isDragging ? "0.3" : "1",
                                     }}
                                 >
-                                    <Card></Card>
+                                    <Card>{task.title}</Card>
                                 </div>
                             )}
                             </Draggable>
                         ))}
-                    }
+                        {provided.placeholder}
                     </div>
                 </div>
                 )}
